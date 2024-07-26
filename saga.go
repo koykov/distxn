@@ -1,11 +1,7 @@
 package distnx
 
 type Saga struct {
-    jobs []Job
-}
-
-func (x *Saga) AddJob(job Job) {
-    x.jobs = append(x.jobs, job)
+    jobs
 }
 
 func (x *Saga) Commit() error {

@@ -1,11 +1,7 @@
 package distnx
 
 type TwoPhaseCommit struct {
-    jobs []Job
-}
-
-func (x *TwoPhaseCommit) AddJob(job Job) {
-    x.jobs = append(x.jobs, job)
+    jobs
 }
 
 func (x *TwoPhaseCommit) Commit() error {

@@ -1,11 +1,11 @@
 package distnx
 
 type DistNX interface {
-    AddJob(Job)
-    Commit() error
-    Rollback() error
+	AddJob(Job) DistNX
+	Commit() error
+	Rollback() error
 }
 
 type Job interface {
-    Do() error
+	Do() error
 }

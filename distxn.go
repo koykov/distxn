@@ -2,8 +2,8 @@ package distnx
 
 import "context"
 
-type DistNX interface {
-	AddJob(Job) DistNX
+type DistXN interface {
+	AddJob(Job)
 	Execute(ctx context.Context) error
 }
 

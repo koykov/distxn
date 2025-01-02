@@ -15,20 +15,20 @@ func New() *TPC {
 	return &TPC{}
 }
 
-func (tpc *TPC) Execute(ctx context.Context) error {
-	jobs := tpc.Jobs.Jobs()
+func (dxn *TPC) Execute(ctx context.Context) error {
+	jobs := dxn.Jobs.Jobs()
 	for i := 0; i < len(jobs); i++ {
 		txn, err := jobs[i].Begin(ctx)
 		if err != nil {
 			return err
 		}
-		tpc.buf = append(tpc.buf, txn)
+		dxn.buf = append(dxn.buf, txn)
 	}
 
-	for i := 0; i < len(tpc.buf); i++ {
-		if err := tpc.buf[i].Commit(ctx); err != nil {
+	for i := 0; i < len(dxn.buf); i++ {
+		if err := dxn.buf[i].Commit(ctx); err != nil {
 			for j := i; j >= 0; j-- {
-				if err := tpc.buf[j].Rollback(ctx); err != nil {
+				if err := dxn.buf[j].Rollback(ctx); err != nil {
 					return err
 				}
 			}
@@ -38,7 +38,7 @@ func (tpc *TPC) Execute(ctx context.Context) error {
 	return nil
 }
 
-func (tpc *TPC) Reset() {
-	tpc.Jobs.Reset()
-	tpc.buf = tpc.buf[:0]
+func (dxn *TPC) Reset() {
+	dxn.Jobs.Reset()
+	dxn.buf = dxn.buf[:0]
 }

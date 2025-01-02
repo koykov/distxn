@@ -8,19 +8,20 @@ type pool struct {
 
 var p_ pool
 
-func Acquire() *Ctx {
-	ctx := p_.p.Get()
-	if ctx == nil {
+func Acquire() *TPC {
+	tpc := p_.p.Get()
+	if tpc == nil {
 		return New()
 	}
-	return ctx.(*Ctx)
+	return tpc.(*TPC)
 }
 
-func Release(ctx *Ctx) {
-	if ctx == nil {
+func Release(tpc *TPC) {
+	if tpc == nil {
 		return
 	}
-	p_.p.Put(ctx)
+	tpc.Reset()
+	p_.p.Put(tpc)
 }
 
 var _, _ = Acquire, Release

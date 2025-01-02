@@ -4,11 +4,14 @@ import "context"
 
 type DistNX interface {
 	AddJob(Job) DistNX
-	Commit(ctx context.Context) (int, error)
-	Rollback(ctx context.Context) (int, error)
+	Execute(ctx context.Context) error
 }
 
 type Job interface {
+	Begin(ctx context.Context) (Txn, error)
+}
+
+type Txn interface {
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
 }

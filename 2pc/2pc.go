@@ -8,34 +8,37 @@ import (
 
 type TPC struct {
 	distnx.Jobs
+	buf []distnx.Txn
 }
 
 func New() *TPC {
 	return &TPC{}
 }
 
-func (tpc *TPC) Commit(ctx context.Context) (n int, err error) {
+func (tpc *TPC) Execute(ctx context.Context) error {
 	jobs := tpc.Jobs.Jobs()
 	for i := 0; i < len(jobs); i++ {
-		if err = jobs[i].Commit(ctx); err != nil {
-			return
+		txn, err := jobs[i].Begin(ctx)
+		if err != nil {
+			return err
 		}
-		n++
+		tpc.buf = append(tpc.buf, txn)
 	}
-	return
-}
 
-func (tpc *TPC) Rollback(ctx context.Context) (n int, err error) {
-	jobs := tpc.Jobs.Jobs()
-	for i := 0; i < len(jobs); i++ {
-		if err = jobs[i].Rollback(ctx); err != nil {
-			return
+	for i := 0; i < len(tpc.buf); i++ {
+		if err := tpc.buf[i].Commit(ctx); err != nil {
+			for j := i; j >= 0; j-- {
+				if err := tpc.buf[j].Rollback(ctx); err != nil {
+					return err
+				}
+			}
+			return err
 		}
-		n++
 	}
-	return
+	return nil
 }
 
 func (tpc *TPC) Reset() {
 	tpc.Jobs.Reset()
+	tpc.buf = tpc.buf[:0]
 }

@@ -1,6 +1,10 @@
 package twophasecommit
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/koykov/distnx"
+)
 
 type pool struct {
 	p sync.Pool
@@ -9,19 +13,31 @@ type pool struct {
 var p_ pool
 
 func Acquire() *TPC {
-	tpc := p_.p.Get()
-	if tpc == nil {
+	raw := p_.p.Get()
+	if raw == nil {
 		return New()
 	}
-	return tpc.(*TPC)
+	return raw.(*TPC)
 }
 
-func Release(tpc *TPC) {
-	if tpc == nil {
+func AcquireWithJobs(jobs ...distnx.Job) *TPC {
+	raw := p_.p.Get()
+	if raw == nil {
+		return NewWithJobs(jobs...)
+	}
+	dxn := raw.(*TPC)
+	for i := 0; i < len(jobs); i++ {
+		dxn.AddJob(jobs[i])
+	}
+	return dxn
+}
+
+func Release(dxn *TPC) {
+	if dxn == nil {
 		return
 	}
-	tpc.Reset()
-	p_.p.Put(tpc)
+	dxn.Reset()
+	p_.p.Put(dxn)
 }
 
-var _, _ = Acquire, Release
+var _, _, _ = Acquire, AcquireWithJobs, Release

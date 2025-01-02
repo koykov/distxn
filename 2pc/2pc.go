@@ -15,6 +15,14 @@ func New() *TPC {
 	return &TPC{}
 }
 
+func NewWithJobs(jobs ...distnx.Job) *TPC {
+	dxn := &TPC{}
+	for i := 0; i < len(jobs); i++ {
+		dxn.AddJob(jobs[i])
+	}
+	return dxn
+}
+
 func (dxn *TPC) Execute(ctx context.Context) error {
 	jobs := dxn.Jobs.Jobs()
 	for i := 0; i < len(jobs); i++ {

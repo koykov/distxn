@@ -61,6 +61,7 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 	go func(wg *sync.WaitGroup) {
 		wg.Wait()
 		close(done)
+		close(errc)
 	}(&wg)
 	select {
 	case err := <-errc:
@@ -72,6 +73,13 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 	}
 
 	// Phase #2: commit
+	if dxn.async {
+		return dxn.asyncCommit(ctx)
+	}
+	return dxn.commit(ctx)
+}
+
+func (dxn *TPC) commit(ctx context.Context) error {
 	for i := 0; i < len(dxn.buf); i++ {
 		if err := dxn.buf[i].Commit(ctx); err != nil {
 			for j := i; j >= 0; j-- {
@@ -81,6 +89,48 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 			}
 			return err
 		}
+	}
+	return nil
+}
+
+func (dxn *TPC) asyncCommit(ctx context.Context) error {
+	n := len(dxn.buf)
+	var (
+		wg   sync.WaitGroup
+		errc = make(chan error)
+		done = make(chan struct{})
+	)
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func(ctx context.Context, txn distnx.Txn, errc chan error) {
+			defer wg.Done()
+			if err := txn.Commit(ctx); err != nil {
+				errc <- err
+				return
+			}
+		}(ctx, dxn.buf[i], errc)
+	}
+	go func() {
+		wg.Wait()
+		close(done)
+		close(errc)
+	}()
+	var err error
+	select {
+	case err1 := <-errc:
+		err = err1
+		return err
+	case <-ctx.Done():
+		err = ctx.Err()
+	case <-done:
+		// do nothing
+	}
+
+	if err != nil {
+		for i := 0; i < n; i++ {
+			_ = dxn.buf[i].Rollback(ctx)
+		}
+		return err
 	}
 	return nil
 }

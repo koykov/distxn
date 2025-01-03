@@ -11,15 +11,16 @@ import (
 
 type TPC struct {
 	distnx.Jobs
-	buf []distnx.Txn
+	async bool
+	buf   []distnx.Txn
 }
 
-func New() *TPC {
-	return &TPC{}
+func New(async bool) *TPC {
+	return &TPC{async: async}
 }
 
-func NewWithJobs(jobs ...distnx.Job) *TPC {
-	dxn := &TPC{}
+func NewWithJobs(async bool, jobs ...distnx.Job) *TPC {
+	dxn := &TPC{async: async}
 	for i := 0; i < len(jobs); i++ {
 		dxn.AddJob(jobs[i])
 	}
@@ -86,5 +87,6 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 
 func (dxn *TPC) Reset() {
 	dxn.Jobs.Reset()
+	dxn.async = false
 	dxn.buf = dxn.buf[:0]
 }

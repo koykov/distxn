@@ -50,6 +50,10 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 				errc <- err
 				return
 			}
+			if err = txn.Prepare(ctx); err != nil {
+				errc <- err
+				return
+			}
 			dxn.buf[atomic.AddUint32(&idx, 1)] = txn
 		}(ctx, jobs[i], errc)
 	}

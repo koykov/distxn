@@ -82,7 +82,7 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 func (dxn *TPC) commit(ctx context.Context) error {
 	for i := 0; i < len(dxn.buf); i++ {
 		if err := dxn.buf[i].Commit(ctx); err != nil {
-			for j := i; j >= 0; j-- {
+			for j := len(dxn.buf); j >= 0; j-- {
 				if err := dxn.buf[j].Rollback(ctx); err != nil {
 					return err
 				}

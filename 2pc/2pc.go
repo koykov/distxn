@@ -2,9 +2,7 @@ package twopc
 
 import (
 	"context"
-	"math"
 	"sync"
-	"sync/atomic"
 
 	"github.com/koykov/distxn"
 )
@@ -12,7 +10,6 @@ import (
 type TPC struct {
 	distxn.Jobs
 	async bool
-	buf   []distxn.Txn
 }
 
 func New(async bool) *TPC {
@@ -30,32 +27,22 @@ func NewWithJobs(async bool, jobs ...distxn.Job) *TPC {
 func (dxn *TPC) Execute(ctx context.Context) error {
 	jobs := dxn.Jobs.Jobs()
 	n := len(jobs)
-	if cap(dxn.buf) < n {
-		dxn.buf = make([]distxn.Txn, n)
-	}
-	dxn.buf = dxn.buf[:n:n]
 
 	// Phase #1: prepare
 	var (
 		wg   sync.WaitGroup
-		errc        = make(chan error)
-		done        = make(chan struct{})
-		idx  uint32 = math.MaxUint32
+		errc = make(chan error)
+		done = make(chan struct{})
 	)
 	wg.Add(n)
 	for i := 0; i < len(jobs); i++ {
 		go func(ctx context.Context, job distxn.Job, errc chan error) {
 			defer wg.Done()
-			txn, err := job.Begin(ctx)
-			if err != nil {
+
+			if err := job.Prepare(ctx); err != nil {
 				errc <- err
 				return
 			}
-			if err = txn.Prepare(ctx); err != nil {
-				errc <- err
-				return
-			}
-			dxn.buf[atomic.AddUint32(&idx, 1)] = txn
 		}(ctx, jobs[i], errc)
 	}
 	go func(wg *sync.WaitGroup) {
@@ -80,10 +67,11 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 }
 
 func (dxn *TPC) commit(ctx context.Context) error {
-	for i := 0; i < len(dxn.buf); i++ {
-		if err := dxn.buf[i].Commit(ctx); err != nil {
-			for j := len(dxn.buf); j >= 0; j-- {
-				if err := dxn.buf[j].Rollback(ctx); err != nil {
+	jobs := dxn.Jobs.Jobs()
+	for i := 0; i < len(jobs); i++ {
+		if err := jobs[i].Commit(ctx); err != nil {
+			for j := len(jobs); j >= 0; j-- {
+				if err := jobs[j].Rollback(ctx); err != nil {
 					return err
 				}
 			}
@@ -94,7 +82,8 @@ func (dxn *TPC) commit(ctx context.Context) error {
 }
 
 func (dxn *TPC) asyncCommit(ctx context.Context) error {
-	n := len(dxn.buf)
+	jobs := dxn.Jobs.Jobs()
+	n := len(jobs)
 	var (
 		wg   sync.WaitGroup
 		errc = make(chan error)
@@ -102,13 +91,13 @@ func (dxn *TPC) asyncCommit(ctx context.Context) error {
 	)
 	wg.Add(n)
 	for i := 0; i < n; i++ {
-		go func(ctx context.Context, txn distxn.Txn, errc chan error) {
+		go func(ctx context.Context, txn distxn.Job, errc chan error) {
 			defer wg.Done()
 			if err := txn.Commit(ctx); err != nil {
 				errc <- err
 				return
 			}
-		}(ctx, dxn.buf[i], errc)
+		}(ctx, jobs[i], errc)
 	}
 	go func() {
 		wg.Wait()
@@ -128,7 +117,7 @@ func (dxn *TPC) asyncCommit(ctx context.Context) error {
 
 	if err != nil {
 		for i := 0; i < n; i++ {
-			_ = dxn.buf[i].Rollback(ctx)
+			_ = jobs[i].Rollback(ctx)
 		}
 		return err
 	}
@@ -138,5 +127,4 @@ func (dxn *TPC) asyncCommit(ctx context.Context) error {
 func (dxn *TPC) Reset() {
 	dxn.Jobs.Reset()
 	dxn.async = false
-	dxn.buf = dxn.buf[:0]
 }

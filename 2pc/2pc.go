@@ -6,20 +6,20 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/koykov/distnx"
+	"github.com/koykov/distxn"
 )
 
 type TPC struct {
-	distnx.Jobs
+	distxn.Jobs
 	async bool
-	buf   []distnx.Txn
+	buf   []distxn.Txn
 }
 
 func New(async bool) *TPC {
 	return &TPC{async: async}
 }
 
-func NewWithJobs(async bool, jobs ...distnx.Job) *TPC {
+func NewWithJobs(async bool, jobs ...distxn.Job) *TPC {
 	dxn := &TPC{async: async}
 	for i := 0; i < len(jobs); i++ {
 		dxn.AddJob(jobs[i])
@@ -31,7 +31,7 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 	jobs := dxn.Jobs.Jobs()
 	n := len(jobs)
 	if cap(dxn.buf) < n {
-		dxn.buf = make([]distnx.Txn, n)
+		dxn.buf = make([]distxn.Txn, n)
 	}
 	dxn.buf = dxn.buf[:n:n]
 
@@ -44,7 +44,7 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 	)
 	wg.Add(n)
 	for i := 0; i < len(jobs); i++ {
-		go func(ctx context.Context, job distnx.Job, errc chan error) {
+		go func(ctx context.Context, job distxn.Job, errc chan error) {
 			defer wg.Done()
 			txn, err := job.Begin(ctx)
 			if err != nil {
@@ -102,7 +102,7 @@ func (dxn *TPC) asyncCommit(ctx context.Context) error {
 	)
 	wg.Add(n)
 	for i := 0; i < n; i++ {
-		go func(ctx context.Context, txn distnx.Txn, errc chan error) {
+		go func(ctx context.Context, txn distxn.Txn, errc chan error) {
 			defer wg.Done()
 			if err := txn.Commit(ctx); err != nil {
 				errc <- err

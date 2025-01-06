@@ -1,9 +1,9 @@
 package saga
 
-import "github.com/koykov/distnx"
+import "github.com/koykov/distxn"
 
 type Ctx struct {
-	distnx.Jobs
+	distxn.Jobs
 }
 
 func New() *Ctx {

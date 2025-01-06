@@ -1,4 +1,4 @@
-package distnx
+package distxn
 
 type Jobs struct {
 	buf []Job

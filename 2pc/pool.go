@@ -3,7 +3,7 @@ package twopc
 import (
 	"sync"
 
-	"github.com/koykov/distnx"
+	"github.com/koykov/distxn"
 )
 
 type pool struct {
@@ -22,7 +22,7 @@ func Acquire(async bool) *TPC {
 	return dxn
 }
 
-func AcquireWithJobs(async bool, jobs ...distnx.Job) *TPC {
+func AcquireWithJobs(async bool, jobs ...distxn.Job) *TPC {
 	raw := p_.p.Get()
 	if raw == nil {
 		return NewWithJobs(async, jobs...)

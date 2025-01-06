@@ -1,3 +1,3 @@
-module github.com/koykov/distnx
+module github.com/koykov/distxn
 
 go 1.22

@@ -7,25 +7,25 @@ import (
 	"github.com/koykov/distxn"
 )
 
-type TPC struct {
+type Txn struct {
 	distxn.Jobs
 	async bool
 }
 
-func New(async bool) *TPC {
-	return &TPC{async: async}
+func New(async bool) *Txn {
+	return &Txn{async: async}
 }
 
-func NewWithJobs(async bool, jobs ...distxn.Job) *TPC {
-	dxn := &TPC{async: async}
+func NewWithJobs(async bool, jobs ...distxn.Job) *Txn {
+	dxn := &Txn{async: async}
 	for i := 0; i < len(jobs); i++ {
 		dxn.AddJob(jobs[i])
 	}
 	return dxn
 }
 
-func (dxn *TPC) Execute(ctx context.Context) error {
-	jobs := dxn.Jobs.Jobs()
+func (txn *Txn) Execute(ctx context.Context) error {
+	jobs := txn.Jobs.Jobs()
 	n := len(jobs)
 
 	// Phase #1: prepare
@@ -60,14 +60,14 @@ func (dxn *TPC) Execute(ctx context.Context) error {
 	}
 
 	// Phase #2: commit
-	if dxn.async {
-		return dxn.asyncCommit(ctx)
+	if txn.async {
+		return txn.asyncCommit(ctx)
 	}
-	return dxn.commit(ctx)
+	return txn.commit(ctx)
 }
 
-func (dxn *TPC) commit(ctx context.Context) error {
-	jobs := dxn.Jobs.Jobs()
+func (txn *Txn) commit(ctx context.Context) error {
+	jobs := txn.Jobs.Jobs()
 	for i := 0; i < len(jobs); i++ {
 		if err := jobs[i].Commit(ctx); err != nil {
 			for j := len(jobs); j >= 0; j-- {
@@ -81,8 +81,8 @@ func (dxn *TPC) commit(ctx context.Context) error {
 	return nil
 }
 
-func (dxn *TPC) asyncCommit(ctx context.Context) error {
-	jobs := dxn.Jobs.Jobs()
+func (txn *Txn) asyncCommit(ctx context.Context) error {
+	jobs := txn.Jobs.Jobs()
 	n := len(jobs)
 	var (
 		wg   sync.WaitGroup
@@ -124,7 +124,7 @@ func (dxn *TPC) asyncCommit(ctx context.Context) error {
 	return nil
 }
 
-func (dxn *TPC) Reset() {
-	dxn.Jobs.Reset()
-	dxn.async = false
+func (txn *Txn) Reset() {
+	txn.Jobs.Reset()
+	txn.async = false
 }

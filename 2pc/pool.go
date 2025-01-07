@@ -12,22 +12,22 @@ type pool struct {
 
 var p_ pool
 
-func Acquire(async bool) *TPC {
+func Acquire(async bool) *Txn {
 	raw := p_.p.Get()
 	if raw == nil {
 		return New(async)
 	}
-	dxn := raw.(*TPC)
+	dxn := raw.(*Txn)
 	dxn.async = async
 	return dxn
 }
 
-func AcquireWithJobs(async bool, jobs ...distxn.Job) *TPC {
+func AcquireWithJobs(async bool, jobs ...distxn.Job) *Txn {
 	raw := p_.p.Get()
 	if raw == nil {
 		return NewWithJobs(async, jobs...)
 	}
-	dxn := raw.(*TPC)
+	dxn := raw.(*Txn)
 	dxn.async = async
 	for i := 0; i < len(jobs); i++ {
 		dxn.AddJob(jobs[i])
@@ -35,7 +35,7 @@ func AcquireWithJobs(async bool, jobs ...distxn.Job) *TPC {
 	return dxn
 }
 
-func Release(dxn *TPC) {
+func Release(dxn *Txn) {
 	if dxn == nil {
 		return
 	}

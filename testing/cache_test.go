@@ -13,6 +13,10 @@ type TestCacheClient struct {
 	svc *TestCache
 }
 
+func NewTestCacheClient(cache *TestCache) *TestCacheClient {
+	return &TestCacheClient{cache}
+}
+
 func (c *TestCacheClient) Put(ctx context.Context, key string, value any) error {
 	if c.svc.fail {
 		return errors.New("unexpected error")
@@ -30,6 +34,10 @@ func (c *TestCacheClient) Delete(ctx context.Context, key string) error {
 
 type TestCacheJob struct {
 	cln *TestCacheClient
+}
+
+func NewTestCacheJob(cln *TestCacheClient) *TestCacheJob {
+	return &TestCacheJob{cln}
 }
 
 func (j *TestCacheJob) Prepare(ctx context.Context) error { return nil }

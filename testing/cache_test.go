@@ -18,6 +18,7 @@ func NewTestCacheClient(cache *TestCache) *TestCacheClient {
 }
 
 func (c *TestCacheClient) Put(ctx context.Context, key string, value any) error {
+	_, _ = key, value
 	if c.svc.fail {
 		return errors.New("unexpected error")
 	}
@@ -28,7 +29,8 @@ func (c *TestCacheClient) Put(ctx context.Context, key string, value any) error 
 	return nil
 }
 
-func (c *TestCacheClient) Delete(ctx context.Context, key string) error {
+func (c *TestCacheClient) Delete(_ context.Context, key string) error {
+	_ = key
 	return nil
 }
 
@@ -40,7 +42,7 @@ func NewTestCacheJob(cln *TestCacheClient) *TestCacheJob {
 	return &TestCacheJob{cln}
 }
 
-func (j *TestCacheJob) Prepare(ctx context.Context) error { return nil }
+func (j *TestCacheJob) Prepare(_ context.Context) error { return nil }
 
 func (j *TestCacheJob) Commit(ctx context.Context) error {
 	return j.cln.Put(ctx, "foobar", "lorem ipsum...")

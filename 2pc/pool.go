@@ -15,7 +15,7 @@ var p_ pool
 func Acquire(async bool) *Txn {
 	raw := p_.p.Get()
 	if raw == nil {
-		return New(async)
+		return New()
 	}
 	dxn := raw.(*Txn)
 	dxn.async = async
@@ -25,7 +25,7 @@ func Acquire(async bool) *Txn {
 func AcquireWithJobs(async bool, jobs ...distxn.Job) *Txn {
 	raw := p_.p.Get()
 	if raw == nil {
-		return NewWithJobs(async, jobs...)
+		return NewWithJobs(jobs...)
 	}
 	dxn := raw.(*Txn)
 	dxn.async = async

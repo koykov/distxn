@@ -12,16 +12,22 @@ type Txn struct {
 	async bool
 }
 
-func New(async bool) *Txn {
-	return &Txn{async: async}
+func New() *Txn {
+	return &Txn{}
 }
 
-func NewWithJobs(async bool, jobs ...distxn.Job) *Txn {
-	dxn := &Txn{async: async}
+func NewWithJobs(jobs ...distxn.Job) *Txn {
+	dxn := &Txn{}
 	for i := 0; i < len(jobs); i++ {
 		dxn.AddJob(jobs[i])
 	}
 	return dxn
+}
+
+// WithAsync enables async mode for jobs processing.
+func (txn *Txn) WithAsync() *Txn {
+	txn.async = true
+	return txn
 }
 
 func (txn *Txn) Execute(ctx context.Context) error {

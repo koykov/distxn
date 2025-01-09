@@ -70,7 +70,7 @@ func (txn *Txn) commit(ctx context.Context) error {
 	jobs := txn.Jobs.Jobs()
 	for i := 0; i < len(jobs); i++ {
 		if err := jobs[i].Commit(ctx); err != nil {
-			for j := len(jobs); j >= 0; j-- {
+			for j := len(jobs) - 1; j >= 0; j-- {
 				if err := jobs[j].Rollback(ctx); err != nil {
 					return err
 				}

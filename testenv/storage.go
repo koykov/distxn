@@ -2,7 +2,6 @@ package testenv
 
 import (
 	"context"
-	"errors"
 	"math"
 )
 
@@ -24,14 +23,7 @@ func (c *TestStorageClient) Beginx(_ context.Context) error {
 
 func (c *TestStorageClient) Insert(ctx context.Context, values ...any) error {
 	_ = values
-	if c.stor.fail {
-		return errors.New("unexpected error")
-	}
-	if c.stor.timeout {
-		<-ctx.Done()
-		return context.DeadlineExceeded
-	}
-	return nil
+	return c.stor.emulate(ctx)
 }
 
 func (c *TestStorageClient) Delete(_ context.Context) error {

@@ -2,7 +2,6 @@ package testenv
 
 import (
 	"context"
-	"errors"
 )
 
 type TestService struct {
@@ -19,14 +18,7 @@ func NewTestServiceClient(svc *TestService) *TestServiceClient {
 
 func (c *TestServiceClient) Save(ctx context.Context, tuple any) error {
 	_ = tuple
-	if c.svc.fail {
-		return errors.New("unexpected error")
-	}
-	if c.svc.timeout {
-		<-ctx.Done()
-		return context.DeadlineExceeded
-	}
-	return nil
+	return c.svc.emulate(ctx)
 }
 
 func (c *TestServiceClient) Remove(_ context.Context) error {

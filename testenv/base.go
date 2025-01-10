@@ -1,6 +1,9 @@
 package testenv
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 type TestBase struct {
 	fail, timeout bool
@@ -23,3 +26,16 @@ func (t *TestBase) SetFail(value bool) {
 func (t *TestBase) SetTimeout(value bool) {
 	t.timeout = value
 }
+
+func (t *TestBase) emulate(ctx context.Context) error {
+	if t.fail {
+		return errUnexpected
+	}
+	if t.timeout {
+		<-ctx.Done()
+		return context.DeadlineExceeded
+	}
+	return nil
+}
+
+var errUnexpected = errors.New("unexpected error")

@@ -2,7 +2,6 @@ package testenv
 
 import (
 	"context"
-	"errors"
 )
 
 type TestCache struct {
@@ -19,14 +18,7 @@ func NewTestCacheClient(cache *TestCache) *TestCacheClient {
 
 func (c *TestCacheClient) Put(ctx context.Context, key string, value any) error {
 	_, _ = key, value
-	if c.svc.fail {
-		return errors.New("unexpected error")
-	}
-	if c.svc.timeout {
-		<-ctx.Done()
-		return context.DeadlineExceeded
-	}
-	return nil
+	return c.svc.emulate(ctx)
 }
 
 func (c *TestCacheClient) Delete(_ context.Context, key string) error {

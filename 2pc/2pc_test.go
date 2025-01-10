@@ -26,7 +26,9 @@ func Test2PC(t *testing.T) {
 		defer func() { _ = env.TearDown(ctx) }()
 
 		txn := NewWithJobs(jobs...)
-		if err := txn.Execute(ctx); err != nil {
+		xctx, xcacnel := context.WithTimeout(context.Background(), time.Millisecond*10)
+		defer xcacnel()
+		if err := txn.Execute(xctx); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -39,12 +41,14 @@ func Test2PC(t *testing.T) {
 		defer func() { _ = env.TearDown(ctx) }()
 
 		txn := NewWithJobs(jobs...)
-		if err := txn.Execute(ctx); err.Error() != "unexpected error" {
+		xctx, xcacnel := context.WithCancel(context.Background())
+		defer xcacnel()
+		if err := txn.Execute(xctx); err.Error() != "unexpected error" {
 			t.Fatal(err)
 		}
 	})
 	t.Run("timeout", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		env, jobs := newEnv()
 		(*env)[1].SetTimeout(true)
@@ -52,7 +56,9 @@ func Test2PC(t *testing.T) {
 		defer func() { _ = env.TearDown(ctx) }()
 
 		txn := NewWithJobs(jobs...)
-		if err := txn.Execute(ctx); err != context.DeadlineExceeded {
+		xctx, xcacnel := context.WithTimeout(context.Background(), time.Millisecond*10)
+		defer xcacnel()
+		if err := txn.Execute(xctx); err != context.DeadlineExceeded {
 			t.Fatal(err)
 		}
 	})
@@ -75,7 +81,9 @@ func Test2PCAsync(t *testing.T) {
 		defer func() { _ = env.TearDown(ctx) }()
 
 		txn := NewWithJobs(jobs...).WithAsync()
-		if err := txn.Execute(ctx); err != nil {
+		xctx, xcacnel := context.WithTimeout(context.Background(), time.Millisecond*10)
+		defer xcacnel()
+		if err := txn.Execute(xctx); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -88,7 +96,9 @@ func Test2PCAsync(t *testing.T) {
 		defer func() { _ = env.TearDown(ctx) }()
 
 		txn := NewWithJobs(jobs...).WithAsync()
-		if err := txn.Execute(ctx); err.Error() != "unexpected error" {
+		xctx, xcacnel := context.WithTimeout(context.Background(), time.Millisecond*10)
+		defer xcacnel()
+		if err := txn.Execute(xctx); err.Error() != "unexpected error" {
 			t.Fatal(err)
 		}
 	})
@@ -101,7 +111,9 @@ func Test2PCAsync(t *testing.T) {
 		defer func() { _ = env.TearDown(ctx) }()
 
 		txn := NewWithJobs(jobs...).WithAsync()
-		if err := txn.Execute(ctx); err != context.DeadlineExceeded {
+		xctx, xcacnel := context.WithTimeout(context.Background(), time.Millisecond*10)
+		defer xcacnel()
+		if err := txn.Execute(xctx); err != context.DeadlineExceeded {
 			t.Fatal(err)
 		}
 	})

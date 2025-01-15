@@ -15,24 +15,24 @@ var p_ pool
 func Acquire(async bool) *Txn {
 	raw := p_.p.Get()
 	if raw == nil {
-		return New()
+		raw = New()
 	}
-	dxn := raw.(*Txn)
-	dxn.async = async
-	return dxn
+	txn := raw.(*Txn)
+	txn.async = async
+	return txn
 }
 
 func AcquireWithJobs(async bool, jobs ...distxn.Job) *Txn {
 	raw := p_.p.Get()
 	if raw == nil {
-		return NewWithJobs(jobs...)
+		raw = NewWithJobs(jobs...)
 	}
-	dxn := raw.(*Txn)
-	dxn.async = async
+	txn := raw.(*Txn)
+	txn.async = async
 	for i := 0; i < len(jobs); i++ {
-		dxn.AddJob(jobs[i])
+		txn.AddJob(jobs[i])
 	}
-	return dxn
+	return txn
 }
 
 func Release(dxn *Txn) {

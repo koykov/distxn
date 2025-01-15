@@ -9,15 +9,16 @@ import (
 	"github.com/koykov/distxn/testenv"
 )
 
-func Test2PC(t *testing.T) {
-	newEnv := func() (*testenv.TestEnvironment, []distxn.Job) {
-		cache, storage, service := testenv.TestCache{}, testenv.TestStorage{}, testenv.TestService{}
-		cacheClient, storageClient, serviceClient := testenv.NewTestCacheClient(&cache), testenv.NewTestStorageClient(&storage), testenv.NewTestServiceClient(&service)
-		cacheJob, storageJob, serviceJob := testenv.NewTestCacheJob(cacheClient), testenv.NewTestStorageJob(storageClient), testenv.NewTestServiceJob(serviceClient)
+func newEnv() (*testenv.TestEnvironment, []distxn.Job) {
+	cache, storage, service := testenv.TestCache{}, testenv.TestStorage{}, testenv.TestService{}
+	cacheClient, storageClient, serviceClient := testenv.NewTestCacheClient(&cache), testenv.NewTestStorageClient(&storage), testenv.NewTestServiceClient(&service)
+	cacheJob, storageJob, serviceJob := testenv.NewTestCacheJob(cacheClient), testenv.NewTestStorageJob(storageClient), testenv.NewTestServiceJob(serviceClient)
 
-		env := testenv.NewTestEnvironment(&cache, &storage, &service)
-		return env, []distxn.Job{cacheJob, storageJob, serviceJob}
-	}
+	env := testenv.NewTestEnvironment(&cache, &storage, &service)
+	return env, []distxn.Job{cacheJob, storageJob, serviceJob}
+}
+
+func Test2PC(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -65,14 +66,6 @@ func Test2PC(t *testing.T) {
 }
 
 func Test2PCAsync(t *testing.T) {
-	newEnv := func() (*testenv.TestEnvironment, []distxn.Job) {
-		cache, storage, service := testenv.TestCache{}, testenv.TestStorage{}, testenv.TestService{}
-		cacheClient, storageClient, serviceClient := testenv.NewTestCacheClient(&cache), testenv.NewTestStorageClient(&storage), testenv.NewTestServiceClient(&service)
-		cacheJob, storageJob, serviceJob := testenv.NewTestCacheJob(cacheClient), testenv.NewTestStorageJob(storageClient), testenv.NewTestServiceJob(serviceClient)
-
-		env := testenv.NewTestEnvironment(&cache, &storage, &service)
-		return env, []distxn.Job{cacheJob, storageJob, serviceJob}
-	}
 	t.Run("success", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()

@@ -17,11 +17,11 @@ func New() *Txn {
 }
 
 func NewWithJobs(jobs ...distxn.Job) *Txn {
-	dxn := &Txn{}
+	txn := &Txn{}
 	for i := 0; i < len(jobs); i++ {
-		dxn.AddJob(jobs[i])
+		txn.AddJob(jobs[i])
 	}
-	return dxn
+	return txn
 }
 
 // WithAsync enables async mode for jobs processing.

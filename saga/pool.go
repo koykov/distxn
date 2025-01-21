@@ -8,15 +8,15 @@ type pool struct {
 
 var p_ pool
 
-func Acquire() *Ctx {
+func Acquire() *Txn {
 	ctx := p_.p.Get()
 	if ctx == nil {
 		return New()
 	}
-	return ctx.(*Ctx)
+	return ctx.(*Txn)
 }
 
-func Release(ctx *Ctx) {
+func Release(ctx *Txn) {
 	if ctx == nil {
 		return
 	}
